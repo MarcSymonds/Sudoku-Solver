@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/EditButtonsView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:maxWidth="200dp"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnEditClr"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="0"
+            android:text="@string/btnEditClr"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit1"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="1"
+            android:text="1"
+            tools:ignore="ButtonStyle,HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit2"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="2"
+            android:text="2"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit3"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="3"
+            android:text="3"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit4"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="4"
+            android:text="4"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnEdit5"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="5"
+            android:text="5"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit6"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="6"
+            android:text="6"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit7"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="7"
+            android:text="7"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit8"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="8"
+            android:text="8"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnEdit9"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editNumberClick"
+            android:tag="9"
+            android:text="9"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnEditClearBoard"
+            style="@android:style/Widget.Button.Inset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editClearBoardClick"
+            android:text="@string/btnEditClearBoard" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btnEditCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editCancelClick"
+            android:text="@android:string/cancel"
+            tools:ignore="ButtonOrder"
+            tools:tag="cancel" />
+
+        <Button
+            android:id="@+id/btnEditAccept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editAcceptClick"
+            android:text="@android:string/ok" />
+
+    </LinearLayout>
+</LinearLayout>
