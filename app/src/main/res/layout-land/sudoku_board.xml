@@ -5,18 +5,34 @@
     android:gravity="center_vertical"
     android:orientation="vertical"
     android:paddingBottom="5dp"
+    android:paddingEnd="5dp"
     android:paddingLeft="5dp"
-    android:paddingRight="0dp"
     android:paddingStart="5dp"
     android:paddingTop="5dp">
 
     <!-- Rows are added to this table programmatically. -->
+
     <TableLayout
         android:id="@+id/SudokuBoardTable"
         android:layout_width="250dp"
         android:layout_height="250dp"
         android:background="@android:color/background_light"
         android:gravity="center_vertical"
-        android:stretchColumns="0,2,4,6,8,10,12,14,16" />
+        android:stretchColumns="0,2,4,6,8,10,12,14,16"></TableLayout>
+
+
+    <TextView
+        android:id="@+id/SolverStateText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:paddingBottom="5dip"
+        android:paddingTop="5dip"
+        android:text="@string/solver_state_blank"
+        android:textColor="@color/solver_state_blank"
+        android:textSize="20sp"
+        android:textStyle="normal|bold"
+        android:typeface="normal" />
 
 </LinearLayout>

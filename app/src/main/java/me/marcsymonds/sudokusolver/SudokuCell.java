@@ -1,77 +1,8 @@
 package me.marcsymonds.sudokusolver;
 
+import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 import android.widget.TextView;
-
-/**
- * Created by Marc on 09/12/2016.
- */
-
-enum CellState {
-    CALCULATED,
-    HARD_FIXED,
-    SOFT_FIXED,
-    SINGLE;
-
-    static CellState fromInteger(int val) {
-        switch (val) {
-            case 0:
-                return CALCULATED;
-            case 1:
-                return HARD_FIXED;
-            case 2:
-                return SOFT_FIXED;
-            default:
-                return SINGLE;
-        }
-    }
-
-    int toInteger() {
-        switch (this) {
-            case CALCULATED:
-                return 0;
-            case HARD_FIXED:
-                return 1;
-            case SOFT_FIXED:
-                return 2;
-            default:
-                return 3;
-        }
-    }
-}
-
-enum CellUsage {
-    FIXED,
-    TRIED,
-    AVAILABLE,
-    USED;
-
-    static CellUsage fromInteger(int val) {
-        switch (val) {
-            case 0:
-                return FIXED;
-            case 1:
-                return TRIED;
-            case 2:
-                return AVAILABLE;
-            default:
-                return USED;
-        }
-    }
-
-    int toInteger() {
-        switch (this) {
-            case FIXED:
-                return 0;
-            case TRIED:
-                return 1;
-            case AVAILABLE:
-                return 2;
-            default:
-                return 3;
-        }
-    }
-}
 
 class SudokuCell {
     private static CellBlock cellBlocks[][] = new CellBlock[3][3];
@@ -86,19 +17,23 @@ class SudokuCell {
         }
     }
 
-    final private String TAG = SudokuBoard.class.getSimpleName();
+    final private String TAG = SudokuCell.class.getSimpleName();
+
+    // Public for easier access.
     int x;
     int y;
-    private SudokuBoard board;
+    CellBlock cellBlock = null;
+
+    private SudokuBoard mBoard;
     private TextView mTextView;
     private int mCurrentNumber = 0;
-    private CellUsage mUsage[] = new CellUsage[9];
+    private CellNumberUsage mUsage[] = new CellNumberUsage[9];
     private int mAvailable;
-    private CellState mState = CellState.CALCULATED;
+    private CellState mState = CellState.NOT_SET;
     private boolean mIsError = false;
     private boolean mIsSelected = false;
     private boolean mIsDirty = true;
-    private CellBlock mBlock = null;
+    private boolean mVisible = false;
 
     /**
      * Constructor. This constructor should not be used.
@@ -106,20 +41,20 @@ class SudokuCell {
      * @param board reference to the parent SudokuBoard.
      */
     private SudokuCell(SudokuBoard board) {
-        //super(board.context);
-        this.board = board;
+        //super(mBoard.context);
+        this.mBoard = board;
     }
 
     /**
      * Constructor used by SudokuBoard.
      *
      * @param board reference to the parent SudokuBoard.
-     * @param x     x position of this cell on the board (0-8).
-     * @param y     y position of this cell on the board (0-8).
+     * @param x     x position of this cell on the mBoard (0-8).
+     * @param y     y position of this cell on the mBoard (0-8).
      */
     public SudokuCell(SudokuBoard board, TextView textView, int x, int y) {
-        //super(board.context);
-        this.board = board;
+        //super(mBoard.context);
+        this.mBoard = board;
         this.mTextView = textView;
 
         this.x = x;
@@ -127,7 +62,7 @@ class SudokuCell {
 
         x = (x >= 6) ? 2 : ((x >= 3) ? 1 : 0);
         y = (y >= 6) ? 2 : ((y >= 3) ? 1 : 0);
-        mBlock = cellBlocks[y][x];
+        cellBlock = cellBlocks[y][x];
 
         clear();
     }
@@ -142,44 +77,70 @@ class SudokuCell {
      * @return string containing data to save.
      */
     String getSaveData() {
-        String data;
+        StringBuilder data = new StringBuilder(14);
 
-        data = String.format("%d%d%d%d%d", mCurrentNumber, mIsSelected ? 1 : 0, mState.toInteger(), mIsError ? 1 : 0, mAvailable);
+        data.append(mCurrentNumber);
+        data.append(mIsSelected ? 1 : 0); // We don't use this during restore.
+        data.append(mState.toInteger());
+        data.append(mIsError ? 1 : 0);
+        data.append(mVisible ? 1 : 0);
+        data.append(mAvailable);
+
         for (int i = 0; i < 9; i++) {
-            data = data + String.valueOf(mUsage[i].toInteger());
+            data.append(mUsage[i].toInteger());
         }
 
-        return data;
+        return data.toString();
     }
 
     /**
      * Restores this cell to a saved state.
      *
-     * @param data string containing the data to restore the cell to a saved state.
+     * @param savedDataReader object used for reading the saved data.
      */
-    void restoreSavedData(String data) {
-        mCurrentNumber = Integer.parseInt(data.substring(0, 1));
+    void restoreSavedData(SavedDataReader savedDataReader) {
+        mCurrentNumber = savedDataReader.readInt();
+        savedDataReader.readInt();
         mIsSelected = false;
-        mState = CellState.fromInteger(Integer.parseInt(data.substring(2, 3)));
-        mIsError = !data.substring(3, 4).equals("0");
-        mAvailable = Integer.parseInt(data.substring(4, 5));
+        mState = CellState.fromInteger(savedDataReader.readInt());
+        mIsError = savedDataReader.readBool();
+        mVisible = savedDataReader.readBool();
+        mAvailable = savedDataReader.readInt();
 
         for (int i = 0, j = 5; i < 9; i++, j++) {
-            mUsage[i] = CellUsage.fromInteger(Integer.parseInt(data.substring(j, j + 1)));
+            mUsage[i] = CellNumberUsage.fromInteger(savedDataReader.readInt());
         }
 
         mIsDirty = true;
     }
 
-    void setNumber(int newNumber, CellState state, boolean draw) {
+    void hide() {
+        setVisible(false);
+    }
+
+    void show() {
+        setVisible(true);
+    }
+
+    void setVisible(boolean state) {
+        if (mVisible != state) {
+            mVisible = state;
+            mIsDirty = true;
+
+            drawCell();
+        }
+    }
+
+    void setNumber(int newNumber, CellState state, boolean draw, boolean visible) {
         if (mCurrentNumber != newNumber || state != mState) {
-            if (newNumber < 1 || newNumber > 9) {
+            if (state == CellState.NOT_SET || newNumber < 1 || newNumber > 9) {
                 mCurrentNumber = 0;
             } else {
                 mCurrentNumber = newNumber;
             }
 
             mState = state;
+            mVisible = visible;
             mIsDirty = true;
 
             if (draw) {
@@ -189,24 +150,27 @@ class SudokuCell {
     }
 
     void setCalculatedNumber(int newNumber, boolean draw) {
-        setNumber(newNumber, CellState.CALCULATED, draw);
+        setNumber(newNumber, CellState.CALCULATED, draw, false);
     }
 
     void setSingleNumber(int newNumber, boolean draw) {
-        setNumber(newNumber, CellState.SINGLE, draw);
+        setNumber(newNumber, CellState.SINGLE, draw, false);
+    }
+
+    void unsetNumber(boolean draw) {
+        setNumber(0, CellState.NOT_SET, draw, false);
     }
 
     int getCurrentNumber() {
         return mCurrentNumber;
     }
 
-
-    void setUsage(int number, CellUsage usage) {
+    void setNumberUsage(int number, CellNumberUsage usage) {
         --number;
         if (mUsage[number] != usage) {
-            if (usage == CellUsage.AVAILABLE) {
+            if (usage == CellNumberUsage.AVAILABLE) {
                 ++mAvailable;
-            } else if (mUsage[number] == CellUsage.AVAILABLE) {
+            } else if (mUsage[number] == CellNumberUsage.AVAILABLE) {
                 --mAvailable;
             }
 
@@ -214,18 +178,8 @@ class SudokuCell {
         }
     }
 
-    CellUsage getUsage(int number) {
+    CellNumberUsage getUsage(int number) {
         return mUsage[number - 1];
-    }
-
-    int getAvailableNumber() {
-        for (int n = 0; n < 9; n++) {
-            if (mUsage[n] == CellUsage.AVAILABLE) {
-                return (n + 1);
-            }
-        }
-
-        return -1;
     }
 
     int getAvailable() {
@@ -238,11 +192,11 @@ class SudokuCell {
         mAvailable = 0;
 
         for (n = 0; n < 9; n++) {
-            if (mUsage[n] == CellUsage.USED || mUsage[n] == CellUsage.TRIED) {
-                mUsage[n] = CellUsage.AVAILABLE;
+            if (mUsage[n] == CellNumberUsage.USED || mUsage[n] == CellNumberUsage.TRIED) {
+                mUsage[n] = CellNumberUsage.AVAILABLE;
             }
 
-            if (mUsage[n] == CellUsage.AVAILABLE) {
+            if (mUsage[n] == CellNumberUsage.AVAILABLE) {
                 ++mAvailable;
             }
         }
@@ -264,12 +218,8 @@ class SudokuCell {
         }
     }
 
-    CellBlock cellBlock() {
-        return mBlock;
-    }
-
     boolean isFixed() {
-        return (mState == CellState.HARD_FIXED || mState == CellState.SOFT_FIXED);
+        return (mState == CellState.HARD_FIXED);
     }
 
     boolean isHardFixed() {
@@ -284,35 +234,37 @@ class SudokuCell {
     void drawCell() {
         int bg, fg;
 
-        if (!board.isUpdating() && mIsDirty) {
+        if (!mBoard.isUpdating() && mIsDirty) {
+            if (mVisible || mIsSelected || mIsError) {
+                if (mIsSelected) {
+                    bg = ContextCompat.getColor(mBoard.context, R.color.cellEdit);
+                } else if (mIsError) {
+                    bg = ContextCompat.getColor(mBoard.context, R.color.cellError);
+                } else if (mState == CellState.SINGLE || mState == CellState.CALCULATED) {
+                    bg = ContextCompat.getColor(mBoard.context, R.color.cellCalculated);
+                } else {
+                    bg = ContextCompat.getColor(mBoard.context, R.color.cellNormal);
+                }
 
-            if (mIsSelected) {
-                bg = ContextCompat.getColor(board.context, R.color.cellEdit);
-            } else if (mIsError) {
-                bg = ContextCompat.getColor(board.context, R.color.cellError);
-            } else if (mState == CellState.SINGLE) {
-                bg = ContextCompat.getColor(board.context, R.color.cellSingle);
+                if (mIsError) {
+                    fg = ContextCompat.getColor(mBoard.context, R.color.numberError);
+                } else if (mState == CellState.SINGLE || mState == CellState.CALCULATED) {
+                    fg = ContextCompat.getColor(mBoard.context, R.color.numberCalculated);
+                } else {
+                    fg = ContextCompat.getColor(mBoard.context, R.color.numberNormal);
+                }
             } else {
-                bg = ContextCompat.getColor(board.context, R.color.cellNormal);
-            }
-
-            if (mIsError) {
-                fg = ContextCompat.getColor(board.context, R.color.numberError);
-            } else if (mState == CellState.CALCULATED) {
-                fg = ContextCompat.getColor(board.context, R.color.numberCalculate);
-            } else if (mState == CellState.SOFT_FIXED) {
-                fg = ContextCompat.getColor(board.context, R.color.numberSoftFix);
-            } else {
-                fg = ContextCompat.getColor(board.context, R.color.numberNormal);
+                bg = ContextCompat.getColor(mBoard.context, R.color.cellInvisible);
+                fg = Color.BLACK;
             }
 
             mTextView.setBackgroundColor(bg);
             mTextView.setTextColor(fg);
 
-            if (mCurrentNumber < 1) {
-                mTextView.setText(".");
-            } else {
+            if ((mVisible || mIsSelected || mIsError) && mCurrentNumber > 0) {
                 mTextView.setText(String.valueOf(mCurrentNumber));
+            } else {
+                mTextView.setText(" ");
             }
 
             //if (mCurrentNumber > 0) {
@@ -327,13 +279,14 @@ class SudokuCell {
      * Resets the cell to a blank state.
      */
     void clear() {
-        mState = CellState.CALCULATED;
+        mState = CellState.NOT_SET;
         mIsError = false;
         mIsSelected = false;
+        mVisible = false;
         mCurrentNumber = 0;
 
         for (int i = 0; i < 9; i++) {
-            mUsage[i] = CellUsage.AVAILABLE;
+            mUsage[i] = CellNumberUsage.AVAILABLE;
         }
         mAvailable = 9;
 
@@ -343,36 +296,10 @@ class SudokuCell {
     void resetPossibleNumbers() {
         mAvailable = 0;
         for (int i = 0; i < 9; i++) {
-            if (mUsage[i] != CellUsage.FIXED) {
-                mUsage[i] = CellUsage.AVAILABLE;
+            if (mUsage[i] != CellNumberUsage.FIXED) {
+                mUsage[i] = CellNumberUsage.AVAILABLE;
                 ++mAvailable;
             }
         }
     }
-
-/*    String whatNumbers() {
-        String s = "";
-
-        for (int i = 0; i < 9; i++) {
-            if (i > 0) s = s + ", ";
-
-            s = s + String.valueOf(i + 1);
-            switch(mUsage[i]) {
-                case AVAILABLE:
-                    s = s + "A";
-                    break;
-                case USED:
-                    s = s + "U";
-                    break;
-                case FIXED:
-                    s = s + "F";
-                    break;
-                case TRIED:
-                    s = s + "T";
-                    break;
-            }
-        }
-
-        return s;
-    }*/
 }

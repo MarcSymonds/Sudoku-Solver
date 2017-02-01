@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#3f51b5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimaryDark">#303f9f</color>
     <color name="colorAccent">#ff4081</color>
 
     <color name="boardFrame">#b71c1c</color>
@@ -9,11 +9,13 @@
 
     <color name="numberNormal">#000000</color>
     <color name="numberSoftFix">#c67404</color>
-    <color name="numberCalculate">#0000ff</color>
+    <color name="numberCalculated">#0000ff</color>
     <color name="numberError">#cc0000</color>
 
+    <color name="cellInvisible">#ffffff</color>
     <color name="cellError">#ef9a9a</color>
-    <color name="cellNormal">#d2faec</color>
+    <color name="cellNormal">#e0f2f1</color>
     <color name="cellEdit">#ffca28</color>
-    <color name="cellSingle">#80deea</color>
+    <color name="cellSingle">#9ceee6</color>
+    <color name="cellCalculated">#e5eca7</color>
 </resources>

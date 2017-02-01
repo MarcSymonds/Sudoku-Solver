@@ -1,10 +1,6 @@
 package me.marcsymonds.sudokusolver;
 
 /**
- * Created by Marc on 18/12/2016.
- */
-
-/**
  * Identifies which 3x3 block a particular cell is located, by calculating the x and y positions
  * of the block.
  */

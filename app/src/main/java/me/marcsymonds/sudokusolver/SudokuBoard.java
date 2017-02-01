@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -15,7 +14,6 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Created by Marc on 09/12/2016.
@@ -25,14 +23,15 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
     final private String TAG = SudokuBoard.class.getSimpleName();
 
     Context context;
+
     private float displayDensity;
 
     private TableLayout mBoardTable = null;
     private SudokuCell[][] mCells = new SudokuCell[9][9];
 
-    private CellUsage[][][] mBlockUsage = new CellUsage[3][3][9];
-    private CellUsage[][] mHorizontalUsage = new CellUsage[9][9];
-    private CellUsage[][] mVerticalUsage = new CellUsage[9][9];
+    private CellNumberUsage[][][] mBlockUsage = new CellNumberUsage[3][3][9];
+    private CellNumberUsage[][] mHorizontalUsage = new CellNumberUsage[9][9];
+    private CellNumberUsage[][] mVerticalUsage = new CellNumberUsage[9][9];
     private int mHorizontalAvailable[] = new int[9];
     private int mVerticalAvailable[] = new int[9];
     private int mBlockAvailable[][] = new int[3][3];
@@ -45,7 +44,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
     SudokuBoard(Context c) {
         Configuration config;
-        int x, y, n;
+        int x, y;
         DisplayMetrics dm = new DisplayMetrics();
         float maxSize;
         int numSize, boardSize;
@@ -55,10 +54,11 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(dm); //context.getResources().getDisplayMetrics();
         displayDensity = dm.density;
 
-        // 80% of the smallest dimension - width or height.
-        maxSize = ((config.screenWidthDp < config.screenHeightDp) ? config.screenWidthDp : config.screenHeightDp) * 0.8f;
+        // 70% of the smallest dimension - width or height.
+        maxSize = ((config.screenWidthDp < config.screenHeightDp) ? config.screenWidthDp : config.screenHeightDp) * 0.7f;
 
         // Calculate size of each number cell.
+
         numSize = (int) ((maxSize - (8.0f + 6.0f + 4.0f)) / 9.0f); // 8=4 for each border, 6=1 for each thin divider between cells, 4=2 for each thick divider between cells.
 
         // Calculate size of entire board table.
@@ -76,7 +76,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
         clearBoard();
         resetUsage();
-        BuildBoardTableView(numSize);
+        buildBoardTableView(numSize);
     }
 
     void clearBoard() {
@@ -92,24 +92,24 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
         for (x = 0; x < 9; x++) {
             for (n = 0; n < 9; n++) {
-                mVerticalUsage[x][n] = CellUsage.AVAILABLE;
-                mHorizontalUsage[x][n] = CellUsage.AVAILABLE;
+                mVerticalUsage[x][n] = CellNumberUsage.AVAILABLE;
+                mHorizontalUsage[x][n] = CellNumberUsage.AVAILABLE;
             }
             mVerticalAvailable[x] = 9;
             mHorizontalAvailable[x] = 9;
         }
 
-        for (x = 0; x < 3; x++) {
-            for (y = 0; y < 3; y++) {
+        for (y = 0; y < 3; y++) {
+            for (x = 0; x < 3; x++) {
                 for (n = 0; n < 9; n++) {
-                    mBlockUsage[y][x][n] = CellUsage.AVAILABLE;
+                    mBlockUsage[x][y][n] = CellNumberUsage.AVAILABLE;
                 }
-                mBlockAvailable[y][x] = 9;
+                mBlockAvailable[x][y] = 9;
             }
         }
     }
 
-    private void BuildBoardTableView(int cellSize) {
+    private void buildBoardTableView(int cellSize) {
         int x, y;
         TableRow tr;
         View divider;
@@ -119,7 +119,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         // Colours to use for drawing the board.,
         int frameColour = ContextCompat.getColor(context, R.color.boardFrame);
         int dividerColour = ContextCompat.getColor(context, R.color.boardDivider);
-        int cellColour = ContextCompat.getColor(context, R.color.cellNormal);
+        int cellColour = ContextCompat.getColor(context, R.color.cellInvisible);
         int textColour = ContextCompat.getColor(context, R.color.numberNormal);
 
         TableRow.LayoutParams txtlp;
@@ -137,7 +137,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         hdivlp = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, dp2px(1));
         hdivlpw = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, dp2px(2));
 
-        // Generate the board.
+        // Draw the board.
 
         // Top frame border.
         divider = new View(context);
@@ -158,7 +158,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
                 // Cell with the number in it.
                 txt = mCells[x][y].getTextView();// TextView(context);
                 txt.setText(" ");
-                txt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f);
+                txt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f);
                 txt.setTextColor(textColour);
                 txt.setBackgroundColor(cellColour);
                 txt.setGravity(Gravity.CENTER_HORIZONTAL + Gravity.CENTER_VERTICAL);
@@ -213,7 +213,6 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
     void beginUpdate() {
         ++mPreventUpdate;
-        Log.d(TAG, String.format("beginUpdate %d", mPreventUpdate));
     }
 
     void endUpdate() {
@@ -221,7 +220,6 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
     }
 
     void endUpdate(boolean force) {
-        Log.d(TAG, String.format("endUpdate %d", mPreventUpdate));
         if (mPreventUpdate > 0 || force) {
             if (force) {
                 mPreventUpdate = 0;
@@ -255,7 +253,8 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
     /**
      * Validates each cell on the board with a number, to make sure the number matches the Sudoku
-     * rules.
+     * rules. Also checks for cells that are not solvable due to all of the numbers being used
+     * within the row, column or block.
      *
      * @return indicates if there are any errors in the board.
      */
@@ -325,7 +324,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
             }
 
             // Check cells in same 3x3 section.
-            for (SudokuBlockIterator it = new SudokuBlockIterator(cell); it.hasNext(); ) {
+            for (SudokuBlockIterator it = new SudokuBlockIterator(this, cell); it.hasNext(); ) {
                 cmp = it.next();
                 if (cmp.x != cell.x || cmp.y != cell.y) {
                     if (cmp.getCurrentNumber() == num) {
@@ -340,6 +339,9 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         return !err;
     }
 
+    /**
+     * Clears all cells flagged as an error.
+     */
     void clearErrors() {
         mHasErrors = false;
 
@@ -348,12 +350,24 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         }
     }
 
+    /**
+     * Retrieve the specified SudokuCell object.
+     *
+     * @param x
+     * @param y
+     * @return the SudokuCell object.
+     */
+    SudokuCell getCell(int x, int y) {
+        return mCells[x][y];
+    }
+
     void startEdit() {
         startEdit(false);
     }
 
     /**
      * Set the board up for editing.
+     * <p>
      * Sets the onClick handler for each cell so that it can be selected.
      * Highlights the selected cell, defaulting to 0,0 if none previously selected.
      */
@@ -369,9 +383,11 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
                 cell.getTextView().setOnClickListener(this);
 
                 if (!cell.isHardFixed()) {
-                    cell.setCalculatedNumber(0, true);
+                    cell.unsetNumber(true);
                 } else {
+                    //Log.d(TAG, String.format("Using Number %d at [%d,%d]", cell.getCurrentNumber(), cell.x, cell.y));
                     useNumber(cell, cell.getCurrentNumber(), true);
+                    cell.show();
                 }
             }
 
@@ -403,6 +419,12 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         }
     }
 
+    void showAll() {
+        for (SudokuCell cell : this) {
+            cell.show();
+        }
+    }
+
     /**
      * Set which is the selected cell. The currently selected cell is first unselected.
      *
@@ -424,7 +446,6 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
     void unsetSelectedCell() {
         if (mSelectedCell != null) {
             mSelectedCell.setSelected(false);
-            //mSelectedCell = null;
         }
     }
 
@@ -436,14 +457,35 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
             }
 
             if (number > 0) {
-                mSelectedCell.setNumber(number, CellState.HARD_FIXED, true);
+                mSelectedCell.setNumber(number, CellState.HARD_FIXED, true, true);
                 useNumber(mSelectedCell, number, true);
             } else {
-                mSelectedCell.setNumber(0, CellState.CALCULATED, true);
+                mSelectedCell.unsetNumber(true);
             }
-
-            //mSelectedCell.setNumber(number, (number > 0 ? CellState.HARD_FIXED : CellState.CALCULATED), true);
         }
+    }
+
+    /**
+     * Moves the selected cell one position to the right, wrapping at the end of the row and the
+     * end of the board.
+     */
+    void moveSelectedCellToNext() {
+        int x = 0, y = 0;
+
+        if (mSelectedCell != null) {
+            x = mSelectedCell.x + 1;
+            y = mSelectedCell.y;
+
+            if (x > 8) {
+                x = 0;
+                ++y;
+                if (y > 8) {
+                    y = 0;
+                }
+            }
+        }
+
+        setSelectedCell(mCells[x][y]);
     }
 
     /**
@@ -453,27 +495,53 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
      * @return String containing the save data for all of the cells and save data for the table.
      */
     String getSaveData() {
-        int x, y;
-        String data = "";
+        int x, y, n;
+        StringBuilder data = new StringBuilder();
 
         // Get the save data for each cell.
         for (SudokuCell cell : this) {
-            data = data + cell.getSaveData() + "#";
+            data.append(cell.getSaveData());
+            data.append("#");
         }
 
         // Get the save data for the board.
-        data = data + String.format("%d%d%03d",
+        data.append(String.format("%d%d%03d",
                 mEditing ? 1 : 0,
                 mHasErrors ? 1 : 0,
-                mPreventUpdate);
+                mPreventUpdate));
 
+        // Currently selected cell.
         if (mSelectedCell == null) {
-            data = data + "xx";
+            data.append("xx");
         } else {
-            data = data + String.format("%d%d", mSelectedCell.x, mSelectedCell.y);
+            data.append(mSelectedCell.x);
+            data.append(mSelectedCell.y);//String.format("%d%d", mSelectedCell.x, mSelectedCell.y));
         }
 
-        return data;
+        // Get the save data for the number availability.
+        data.append("#");
+
+        for (x = 0; x < 9; x++) {
+            data.append(mHorizontalAvailable[x]);
+            data.append(mVerticalAvailable[x]);
+            //data.append(String.format("%d%d", mHorizontalAvailable[x], mVerticalAvailable[x]));
+            for (n = 0; n < 9; n++) {
+                data.append(mHorizontalUsage[x][n].toInteger());
+                data.append(mVerticalUsage[x][n].toInteger());
+                //data.append(String.format("%d%d", mHorizontalUsage[x][n], mVerticalUsage[x][n]));
+            }
+        }
+
+        for (y = 0; y < 3; y++) {
+            for (x = 0; x < 3; x++) {
+                data.append(mBlockAvailable[x][y]);
+                for (n = 0; n < 9; n++) {
+                    data.append(mBlockUsage[x][y][n].toInteger());
+                }
+            }
+        }
+
+        return data.toString();
     }
 
     void restoreSavedData(String savedData) {
@@ -487,45 +555,70 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
      * @param restoreSelected indicates if the selected cell that was saved should be restored.
      */
     void restoreSavedData(String savedData, boolean restoreSelected) {
-        int x, y, i;
-        String[] cellData = savedData.split("#"); // Data for each cell is separated by a #
-        String boardData;
+        int x, y, n;
+        SavedDataReader savedDataReader = new SavedDataReader(savedData);
 
         // Restore the cells.
-        i = 0;
         for (SudokuCell cell : this) {
-            cell.restoreSavedData(cellData[i]);
-            ++i;
+            cell.restoreSavedData(savedDataReader);//savedDataReader.getSectionData(true));
+            savedDataReader.nextSection();
         }
 
-        // Saved data for the board is in the last section of the saved data.
-        boardData = cellData[cellData.length - 1];
+        // Saved data for the board is in the next section of the saved data.
+        //boardData = cellData[i];
 
-        mEditing = !(boardData.substring(0, 1).equals("0"));
-        mHasErrors = !(boardData.substring(1, 2).equals("0"));
-        mPreventUpdate = Integer.parseInt(boardData.substring(2, 5));
+        mEditing = savedDataReader.readBool();
+        mHasErrors = savedDataReader.readBool();
+        mPreventUpdate = savedDataReader.readInt(3);
 
         if (restoreSelected) {
-            if (!boardData.substring(5, 7).equals("xx")) {
-                x = Integer.parseInt(boardData.substring(5, 6));
-                y = Integer.parseInt(boardData.substring(6, 7));
-                this.setSelectedCell(mCells[x][y]);
-            } else {
+            x = savedDataReader.readInt();
+            if (x < 0) {
                 mSelectedCell = null;
+            } else {
+                y = savedDataReader.readInt();
+                this.setSelectedCell(mCells[x][y]);
+            }
+        }
+
+        // Saved data for the number availability.
+        savedDataReader.nextSection();
+
+        for (x = 0; x < 9; x++) {
+            mHorizontalAvailable[x] = savedDataReader.readInt();// data.append(mHorizontalAvailable[x]);
+            mVerticalAvailable[x] = savedDataReader.readInt(); // data.append(mVerticalAvailable[x]);
+            for (n = 0; n < 9; n++) {
+                mHorizontalUsage[x][n] = CellNumberUsage.fromInteger(savedDataReader.readInt()); // data.append(mHorizontalUsage[x][n]);
+                mVerticalUsage[x][n] = CellNumberUsage.fromInteger(savedDataReader.readInt()); // data.append(mVerticalUsage[x][n]);
+            }
+        }
+
+        for (y = 0; y < 3; y++) {
+            for (x = 0; x < 3; x++) {
+                mBlockAvailable[x][y] = savedDataReader.readInt();
+                for (n = 0; n < 9; n++) {
+                    mBlockUsage[x][y][n] = CellNumberUsage.fromInteger(savedDataReader.readInt());
+                }
             }
         }
     }
 
+    /**
+     * Prepares the bold for solving by clearing any previously calculated numbers.
+     */
     void prepareBoardForSolving() {
         resetUsage();
 
+        // Clear all previously calculated (i.e. not Fixed) numbers, and reset the
+        // "possible numbers" for the cell.
         for (SudokuCell cell : this) {
             if (!cell.isFixed()) {
                 cell.resetPossibleNumbers();
-                cell.setCalculatedNumber(0, false);
+                cell.unsetNumber(false);
             }
         }
 
+        // Now "use" the fixed numbers so that we know which numbers are available for other cells.
         // Needs to be done separately from the above so that the cells to calculate are set up
         // before removing the list of fixed values from the available values.
         for (SudokuCell cell : this) {
@@ -535,13 +628,19 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         }
     }
 
+    /**
+     * Determines an available number that can be tried in the specified cell.
+     *
+     * @param cell the cell to get the number for.
+     * @return the number to try (1 to 9) or -1 if no numbers are available.
+     */
     int getNumberToTryInCell(SudokuCell cell) {
         int n, m;
 
         for (n = 0, m = 1; n < 9; n++, m++) {
-            if (cell.getUsage(m) == CellUsage.AVAILABLE) {
-                if (mHorizontalUsage[cell.y][n] == CellUsage.AVAILABLE && mVerticalUsage[cell.x][n] == CellUsage.AVAILABLE) {
-                    if (mBlockUsage[cell.cellBlock().y][cell.cellBlock().x][n] == CellUsage.AVAILABLE) {
+            if (cell.getUsage(m) == CellNumberUsage.AVAILABLE) {
+                if (mHorizontalUsage[cell.y][n] == CellNumberUsage.AVAILABLE && mVerticalUsage[cell.x][n] == CellNumberUsage.AVAILABLE) {
+                    if (mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][n] == CellNumberUsage.AVAILABLE) {
                         return m;
                     }
                 }
@@ -559,11 +658,22 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
      * @return boolean indicating if the cell is solvable.
      */
     boolean isCellSolvable(SudokuCell cell) {
+        /*if (cell.x == 4 && cell.y == 8){
+            String h = "", v = "", b = "";
+
+            for (int n = 0; n < 9; n++) {
+                h = h + String.valueOf(mHorizontalUsage[cell.y][n].toInteger());
+                v = v + String.valueOf(mVerticalUsage[cell.x][n].toInteger());
+                b = b + String.valueOf(mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][n].toInteger());
+            }
+
+            Log.d(TAG, String.format("4,8=H(%s), V(%s), B(%s)", h, v, b));
+        }*/
+
         for (int n = 0; n < 9; n++) {
-            if (mHorizontalUsage[cell.y][n] == CellUsage.AVAILABLE) {
-                if (mVerticalUsage[cell.x][n] == CellUsage.AVAILABLE) {
-                    CellBlock block = cell.cellBlock();
-                    if (mBlockUsage[block.y][block.x][n] == CellUsage.AVAILABLE) {
+            if (mHorizontalUsage[cell.y][n] == CellNumberUsage.AVAILABLE) {
+                if (mVerticalUsage[cell.x][n] == CellNumberUsage.AVAILABLE) {
+                    if (mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][n] == CellNumberUsage.AVAILABLE) {
                         return true;
                     }
                 }
@@ -574,51 +684,49 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
     }
 
     void useNumber(SudokuCell cell, int number, boolean fixed) {
-        CellBlock block = cell.cellBlock();
-        CellUsage usage = (fixed ? CellUsage.FIXED : CellUsage.USED);
+        CellNumberUsage usage = (fixed ? CellNumberUsage.FIXED : CellNumberUsage.USED);
         int x = cell.x;
         int y = cell.y;
 
         number = number - 1;
 
-        if (mHorizontalUsage[y][number] == CellUsage.AVAILABLE) {
+        if (mHorizontalUsage[y][number] == CellNumberUsage.AVAILABLE) {
             mHorizontalUsage[y][number] = usage;
             mHorizontalAvailable[y]--;
         }
 
-        if (mVerticalUsage[x][number] == CellUsage.AVAILABLE) {
+        if (mVerticalUsage[x][number] == CellNumberUsage.AVAILABLE) {
             mVerticalUsage[x][number] = usage;
             mVerticalAvailable[x]--;
         }
 
-        if (mBlockUsage[block.y][block.x][number] == CellUsage.AVAILABLE) {
-            mBlockUsage[block.y][block.x][number] = usage;
-            mBlockAvailable[block.y][block.x]--;
+        if (mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][number] == CellNumberUsage.AVAILABLE) {
+            mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][number] = usage;
+            mBlockAvailable[cell.cellBlock.x][cell.cellBlock.y]--;
         }
 
-        Log.d(TAG, String.format("Available {%d,%d}: H:%d, V:%d, B:%d", x, y, mHorizontalAvailable[y], mVerticalAvailable[x], mBlockAvailable[block.y][block.x]));
+        //Log.d(TAG, String.format("Available {%d,%d}: H:%d, V:%d, B:%d", x, y, mHorizontalAvailable[y], mVerticalAvailable[x], mBlockAvailable[cell.cellBlock.y][cell.cellBlock.x]));
     }
 
     void unuseNumber(SudokuCell cell, int number) {
-        CellBlock block = cell.cellBlock();
         int x = cell.x;
         int y = cell.y;
 
         number = number - 1;
 
-        if (mHorizontalUsage[y][number] != CellUsage.AVAILABLE) {
-            mHorizontalUsage[y][number] = CellUsage.AVAILABLE;
+        if (mHorizontalUsage[y][number] != CellNumberUsage.AVAILABLE) {
+            mHorizontalUsage[y][number] = CellNumberUsage.AVAILABLE;
             mHorizontalAvailable[y]++;
         }
 
-        if (mVerticalUsage[x][number] != CellUsage.AVAILABLE) {
-            mVerticalUsage[x][number] = CellUsage.AVAILABLE;
+        if (mVerticalUsage[x][number] != CellNumberUsage.AVAILABLE) {
+            mVerticalUsage[x][number] = CellNumberUsage.AVAILABLE;
             mVerticalAvailable[x]++;
         }
 
-        if (mBlockUsage[block.y][block.x][number] != CellUsage.AVAILABLE) {
-            mBlockUsage[block.y][block.x][number] = CellUsage.AVAILABLE;
-            mBlockAvailable[block.y][block.x]++;
+        if (mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][number] != CellNumberUsage.AVAILABLE) {
+            mBlockUsage[cell.cellBlock.x][cell.cellBlock.y][number] = CellNumberUsage.AVAILABLE;
+            mBlockAvailable[cell.cellBlock.x][cell.cellBlock.y]++;
         }
     }
 
@@ -629,10 +737,10 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
     int findSingleNumber(SudokuCell cell) {
         int number = -1;
         int n;
-        CellBlock block = cell.cellBlock();
+        CellBlock block = cell.cellBlock;
 
         for (n = 0; n < 9; n++) {
-            if (mHorizontalUsage[cell.y][n] == CellUsage.AVAILABLE) {
+            if (mHorizontalUsage[cell.y][n] == CellNumberUsage.AVAILABLE) {
                 if (number > 0) {
                     number = -1;
                     break;
@@ -644,12 +752,12 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
         if (number > 0) {
             n = number - 1;
-            if (mVerticalUsage[cell.x][n] != CellUsage.AVAILABLE || mBlockUsage[block.y][block.x][n] != CellUsage.AVAILABLE) {
+            if (mVerticalUsage[cell.x][n] != CellNumberUsage.AVAILABLE || mBlockUsage[block.x][block.y][n] != CellNumberUsage.AVAILABLE) {
                 number = -1;
             }
         } else {
             for (n = 0; n < 9; n++) {
-                if (mVerticalUsage[cell.x][n] == CellUsage.AVAILABLE) {
+                if (mVerticalUsage[cell.x][n] == CellNumberUsage.AVAILABLE) {
                     if (number > 0) {
                         number = -1;
                         break;
@@ -661,12 +769,12 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
             if (number > 0) {
                 n = number - 1;
-                if (mHorizontalUsage[cell.y][n] != CellUsage.AVAILABLE || mBlockUsage[block.y][block.x][n] != CellUsage.AVAILABLE) {
+                if (mHorizontalUsage[cell.y][n] != CellNumberUsage.AVAILABLE || mBlockUsage[block.x][block.y][n] != CellNumberUsage.AVAILABLE) {
                     number = -1;
                 }
             } else {
                 for (n = 0; n < 9; n++) {
-                    if (mBlockUsage[block.y][block.x][n] == CellUsage.AVAILABLE) {
+                    if (mBlockUsage[block.x][block.y][n] == CellNumberUsage.AVAILABLE) {
                         if (number > 0) {
                             number = -1;
                             break;
@@ -678,7 +786,7 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
 
                 if (number > 0) {
                     n = number - 1;
-                    if (mHorizontalUsage[cell.y][n] != CellUsage.AVAILABLE || mVerticalUsage[cell.x][n] != CellUsage.AVAILABLE) {
+                    if (mHorizontalUsage[cell.y][n] != CellNumberUsage.AVAILABLE || mVerticalUsage[cell.x][n] != CellNumberUsage.AVAILABLE) {
                         number = -1;
                     }
                 }
@@ -688,6 +796,12 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         return number;
     }
 
+    /**
+     * Convert density pixels in to actual pixels.
+     *
+     * @param dp density pixels to convert.
+     * @return actual pixels.
+     */
     private int dp2px(int dp) {
         return (int) (dp * displayDensity + 0.5f);
     }
@@ -722,35 +836,6 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
         }
     }
 
-    /**
-     * Debug function that indicates how numbers are currently available for a cell.
-     *
-     * @param cell the SudokuCell to get results for.
-     * @return a string with a character for each number, where the character represents the
-     * availability of that number for this cell; F=Fixed, T=Tried, A=Available, U=Unavailable.
-     */
-    String whatNumbers(SudokuCell cell) {
-        CellBlock block = cell.cellBlock();
-        int n;
-        String s = "";
-
-        for (n = 0; n < 9; n++) {
-            if (n > 0) s = s + ", ";
-            s = s + String.valueOf(n + 1);
-            if (cell.getUsage(n + 1) == CellUsage.FIXED) {
-                s = s + "F";
-            } else if (cell.getUsage(n + 1) == CellUsage.TRIED) {
-                s = s + "T";
-            } else if (mHorizontalUsage[cell.x][n] == CellUsage.AVAILABLE && mVerticalUsage[cell.y][n] == CellUsage.AVAILABLE && mBlockUsage[block.x][block.y][n] == CellUsage.AVAILABLE) {
-                s = s + "A";
-            } else {
-                s = s + "U";
-            }
-        }
-
-        return s;
-    }
-
     /********************************************************************************/
     /* Allows for simpler iteration through all of the cells with:-
           for (SudokuCell cell : {this|mSudokuBoard}) {
@@ -759,103 +844,8 @@ class SudokuBoard implements Iterable<SudokuCell>, TextView.OnClickListener {
      */
     @Override
     public Iterator<SudokuCell> iterator() {
-        return new SudokuCellIterator();
+        return new SudokuCellIterator(this);
     }
-
-
-    class SudokuCellIterator implements Iterator<SudokuCell> {
-        private int x, y;
-
-        SudokuCellIterator() {
-            x = 0;
-            y = 0;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return (y < 9);
-        }
-
-        @Override
-        public SudokuCell next() {
-            if (y >= 9) {
-                throw new NoSuchElementException("No more cells in iteration.");
-            }
-
-            SudokuCell cell = mCells[this.x][this.y];
-
-            ++x;
-            if (x >= 9) {
-                x = 0;
-                ++y;
-            }
-
-            return cell;
-        }
-    }
-
-/*
-    void outUsage() {
-        int x, y, n, m;
-        SudokuCell c;
-        String s;
-
-        for (y = 0; y < 9; y++) {
-            for (n = 0; n < 9; n+=3) {
-                s = "";
-                for (x = 0; x < 9; x++) {
-                    c = mCells[x][y];
-                    for (m = 0; m < 3; m++) {
-                        CellUsage usage = c.getUsage(n + m + 1);
-                        switch (usage) {
-                            case USED:
-                                s = s + "U";
-                                break;
-                            case FIXED:
-                                s = s + "F";
-                                break;
-                            case AVAILABLE:
-                                s = s + "A";
-                                break;
-                            default:
-                                s = s + "T";
-                                break;
-                        }
-                    }
-                    if (x<8) s = s + "|";
-                }
-                Log.d("#", s);
-            }
-            Log.d("#", "------------------------------");
-        }
-    }
-*/
-
-    class SudokuBlockIterator implements Iterator<SudokuCell> {
-        private CellBlock block;
-        private int x, y;
-
-        SudokuBlockIterator(SudokuCell cell) {
-            block = cell.cellBlock();
-            x = block.xl;
-            y = block.yt;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return (y <= block.yb);
-        }
-
-        @Override
-        public SudokuCell next() {
-            SudokuCell cell = mCells[x][y];
-            ++x;
-            if (x > block.xr) {
-                x = block.xl;
-                ++y;
-            }
-            return cell;
-        }
-    }
-
 }
+
+

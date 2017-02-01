@@ -1,12 +1,12 @@
 <resources>
     <string name="app_name">SudokuSolver</string>
+    <string name="app_title">Sudoku Solver</string>
     <string name="action_settings">Settings</string>
 
     <string name="btnEditBoard">Edit Board</string>
-    <string name="btnNextNumber">Next Number</string>
-    <string name="btnSolveBoard">Solve Board</string>
+    <string name="btnNextNumber">Show Next Number</string>
+    <string name="btnSolveBoard">Show Completed Board</string>
 
     <string name="btnEditClr">Clr</string>
     <string name="btnEditClearBoard">Clear Board</string>
-
 </resources>

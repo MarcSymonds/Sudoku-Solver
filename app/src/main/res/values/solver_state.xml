@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="solver_state_solving">Solving - Please wait ...</string>
+    <string name="solver_state_solved">Solved</string>
+    <string name="solver_state_not_solvable">Board could not be solved</string>
+    <string name="solver_state_blank"></string>
+
+    <color name="solver_state_solving">#f57f17</color>
+    <color name="solver_state_solved">#009900</color>
+    <color name="solver_state_not_solvable">#CC0000</color>
+    <color name="solver_state_blank">#000000</color>
+</resources>

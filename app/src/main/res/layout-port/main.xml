@@ -9,7 +9,8 @@
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
+        android:theme="@style/AppTheme.AppBarOverlay"
+        app:expanded="false">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
@@ -21,26 +22,48 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include
-        layout="@layout/sudoku_board"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
+
+        <include
+            layout="@layout/sudoku_board"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <ProgressBar
+            android:id="@+id/solverActivityIndicator"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="false"
+            android:indeterminate="true"
+            android:maxHeight="130dip"
+            android:maxWidth="130dip"
+            android:minHeight="130dip"
+            android:minWidth="130dip"
+            android:visibility="invisible" />
+    </RelativeLayout>
 
     <ViewSwitcher
         android:id="@+id/vwsKeySwitcher"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:animateLayoutChanges="true">
+        android:layout_gravity="center_horizontal"
+        android:animateLayoutChanges="true"
+        android:paddingEnd="20dip"
+        android:paddingStart="20dip">
 
         <include
             layout="@layout/main_buttons"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent" />
 
         <include
             layout="@layout/edit_buttons"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent" />
     </ViewSwitcher>
 
 </LinearLayout>

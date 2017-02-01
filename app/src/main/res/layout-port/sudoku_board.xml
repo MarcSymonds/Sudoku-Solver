@@ -15,4 +15,19 @@
         android:background="@android:color/background_light"
         android:stretchColumns="0,2,4,6,8,10,12,14,16" />
 
+    <TextView
+        android:id="@+id/SolverStateText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:paddingBottom="5dip"
+        android:paddingTop="5dip"
+        android:text="@string/solver_state_blank"
+        android:textAlignment="center"
+        android:textColor="@color/solver_state_blank"
+        android:textSize="20sp"
+        android:textStyle="normal|bold"
+        android:typeface="normal" />
+
 </LinearLayout>
